@@ -1,21 +1,4 @@
-/* 
- * @author https://github.com/hhhanzzz
- * @update 2024/12/13
- * @last modified time: 2024/12/13
-*/
-
-
-module.exports = {
-  ts,
-  toObj,
-  toStr,
-  queryStr,
-  randomNum,
-  randomPattern,
-  randomString,
-  time,
-  wait,
-}
+// src/general/index.js
 
 function ts(type = 13) {
   let date = new Date()
@@ -47,6 +30,31 @@ function ts(type = 13) {
       break
   }
   return res
+}
+
+function time(fmt, ts = Date.now()) {
+  const date = new Date(ts)
+  const map = {
+    'y+': date.getFullYear(),
+    'M+': date.getMonth() + 1,
+    'd+': date.getDate(),
+    'H+': date.getHours(),
+    'h+': date.getHours(),
+    'm+': date.getMinutes(),
+    's+': date.getSeconds(),
+    'q+': Math.ceil((date.getMonth() + 1) / 3), // 季度
+    S: date.getMilliseconds(),
+  }
+
+  return Object.entries(map).reduce((str, [key, value]) => {
+    return str.replace(new RegExp(`(${key})`), (match) =>
+      match.length === 1 ? value : value.toString().padStart(match.length, '0')
+    )
+  }, fmt)
+}
+
+function wait(time) {
+  return new Promise((resolve) => setTimeout(resolve, time))
 }
 
 function toObj(str, defaultValue = str) {
@@ -106,34 +114,15 @@ function randomString(len, charset = 'abcdef0123456789') {
   return str
 }
 
-function time(fmt, ts = null) {
-  const date = ts ? new Date(ts) : new Date()
-  let o = {
-    'M+': date.getMonth() + 1,
-    'd+': date.getDate(),
-    'H+': date.getHours(),
-    'h+': date.getHours(),
-    'm+': date.getMinutes(),
-    's+': date.getSeconds(),
-    'q+': Math.floor((date.getMonth() + 3) / 3),
-    'S': date.getMilliseconds()
-  }
-  if (/(y+)/.test(fmt))
-    fmt = fmt.replace(
-      RegExp.$1,
-      (date.getFullYear() + '').substr(4 - RegExp.$1.length)
-    )
-  for (let k in o)
-    if (new RegExp('(' + k + ')').test(fmt))
-      fmt = fmt.replace(
-        RegExp.$1,
-        RegExp.$1.length == 1
-          ? o[k]
-          : ('00' + o[k]).substr(('' + o[k]).length)
-      )
-  return fmt
-}
-
-function wait(time) {
-  return new Promise((resolve) => setTimeout(resolve, time))
+export {
+  time,
+  ts,
+  wait,
+  wait as sleep,
+  toObj,
+  toStr,
+  queryStr,
+  randomNum,
+  randomPattern,
+  randomString,
 }

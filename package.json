@@ -1,18 +1,36 @@
 {
   "name": "hhhan-utils",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "工具库",
-  "main": "index.js",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "author": "hhhanzzz",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js"
+    }
+  },
   "scripts": {
-    "test": "node test.js"
+    "test": "node test.js",
+    "build": "babel src --out-dir dist/cjs && xcopy .\\src .\\dist\\esm \/E \/I"
   },
   "keywords": [
     "utils"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hhhanzzz/hhhan-utils"
+    "url": "https://github.com/hhhanzzz/hhhan-utils"
   },
-  "author": "hhhanzzz",
-  "license": "MIT"
+  "devDependencies": {
+    "@babel/cli": "^7.26.4",
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0",
+    "got": "^14.4.5"
+  }
 }
