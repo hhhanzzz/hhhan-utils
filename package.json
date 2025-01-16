@@ -1,6 +1,6 @@
 {
   "name": "hhhan-utils",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "工具库",
   "author": "hhhanzzz",
   "main": "/src/index.js",

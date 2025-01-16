@@ -384,6 +384,12 @@ function ts(type = 13) {
   }
 }
 
+function normalizeTs(ts, opts = {}) {
+  const ts_len = opts.len || 13;
+  ts = ts.toString();
+  return parseInt(ts.padEnd(ts_len, '0').slice(0, ts_len))
+}
+
 function time(fmt, ts = Date.now()) {
   const date = new Date(ts);
   const map = {
@@ -458,8 +464,88 @@ function randomString(len, charset = 'abcdef0123456789') {
   return str
 }
 
+function log(...logs) {
+  if (logs.length <= 0) return
+  let logPrefix = '';
+  let opts = { console: true };
+  if (logs.length > 1 && logs.at(-1) instanceof Object) Object.assign(opts, logs.pop());
+
+  if (!opts.timeless && opts.time) {
+    let fmt = opts.fmt || 'HH:mm:ss';
+    logPrefix = `[${time(fmt)}]`;
+  }
+
+  if (!opts.prefixless && opts.prefix) {
+    if (opts.logPrefix) {
+      logPrefix += opts.logPrefix;
+    }
+  }
+
+  if (opts.error && logs[0] instanceof Error) {
+    const err = logs.shift();
+    logs.unshift(err.message);
+  }
+
+  logs = logs.map(log => {
+    if (typeof log !== 'string') log = toStr(log);
+    return log ? (log.startsWith('\n') ? `\n${logPrefix}${log.substring(1)}` : `${logPrefix}${log}`) : log
+  });
+  if (opts.console) console.log(logs.join('\n'));
+}
+
+async function waitUntil(date, opts = {}) {
+  const { interval = 1000, limit = 3600000, ahead = 0 } = opts;
+
+  // 判断 date 是否为有效的时间格式
+  if (typeof date === 'string') {
+    if (!date.includes(':')) {
+      return log(`无效的时间格式: ${date}, 预期格式为 'HH:mm:ss' 或 'yyyy-MM-dd HH:mm:ss'`)
+    }
+    if (!/^(\d{2}):(\d{2}):(\d{2})$/.test(date)) {
+      return log(`无效的时间格式: ${date}, 预期格式为 hh:mm:ss`)
+    }
+    if (date.includes('-')) {
+      date = new Date(date).getTime();
+    } else {
+      date = new Date(time('yyyy-MM-dd ') + date).getTime();
+    }
+  }
+
+  // 如果 date 不是数字（即不是时间戳），不等待
+  if (typeof date !== 'number') {
+    return log(`时间参数无效: ${date}, 预期为时间戳或有效的时间字符串`)
+  }
+
+  let targetTs = normalizeTs(date) - ahead;
+  let targetTime = time('hh:mm:ss.S', targetTs);
+  let currentTs = Date.now();
+
+  if (currentTs > targetTs) targetTs += 86400000; // 24小时内
+
+  let waitTs = targetTs - currentTs;
+  if (waitTs > limit) {
+    return log(`离目标时间[${targetTime}]大于${limit / 1000}秒, 不等待`, { time: true, fmt: opts.fmt || 'HH:mm:ss.S' })
+  }
+  log(`离目标时间[${targetTime}]还有${waitTs / 1000}秒, 开始等待`, { time: true, fmt: opts.fmt || 'HH:mm:ss.S' });
+
+  // 等待目标时间
+  while (waitTs > 0) {
+    const minTime = Math.min(waitTs, interval);
+    await wait(minTime);
+    waitTs = targetTs - Date.now();
+  }
+  log('已完成等待', { time: true, fmt: opts.fmt || 'HH:mm:ss.S' });
+}
+
+async function waitGap(ts, interval) {
+  const gapTs = Date.now() - ts;
+  gapTs < interval && (await wait(interval - gapTs));
+}
+
 var general = /*#__PURE__*/Object.freeze({
   __proto__: null,
+  log: log,
+  normalizeTs: normalizeTs,
   queryStr: queryStr,
   randomNum: randomNum,
   randomPattern: randomPattern,
@@ -469,7 +555,9 @@ var general = /*#__PURE__*/Object.freeze({
   toObj: toObj,
   toStr: toStr,
   ts: ts,
-  wait: wait
+  wait: wait,
+  waitGap: waitGap,
+  waitUntil: waitUntil
 });
 
 /*
@@ -515,5 +603,5 @@ async function loadAllModules() {
   return modules
 }
 
-export { Base64, CryptoTransform, HexToBase64, HmacSHA, MD5, RSA, SHA, SHA1withRSA, async, crypto$1 as crypto, hhhanUtils as default, file, findFileUpwards, general, hasReadPermission, http, limitConcurrency, loadAllModules, loadModule, queryStr, randomNum, randomPattern, randomString, readFileUpwards, request, searchInDirectory, wait as sleep, time, toObj, toStr, ts, wait };
+export { Base64, CryptoTransform, HexToBase64, HmacSHA, MD5, RSA, SHA, SHA1withRSA, async, crypto$1 as crypto, hhhanUtils as default, file, findFileUpwards, general, hasReadPermission, http, limitConcurrency, loadAllModules, loadModule, log, normalizeTs, queryStr, randomNum, randomPattern, randomString, readFileUpwards, request, searchInDirectory, wait as sleep, time, toObj, toStr, ts, wait, waitGap, waitUntil };
 //# sourceMappingURL=hhhan-utils.js.map
